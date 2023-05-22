@@ -2,11 +2,16 @@ package com.example.dailyadvice.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.example.dailyadvice.R
 
 // Set of Material typography styles to start with
+val HelveticaCompressed = FontFamily(
+    Font(resId = R.font.helvetica_compressed)
+)
 val Typography = Typography(
     bodyLarge = TextStyle(
         fontFamily = FontFamily.Default,

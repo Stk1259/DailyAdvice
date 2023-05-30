@@ -1,5 +1,6 @@
 package com.example.dailyadvice.ui.view
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -23,8 +24,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -37,29 +38,35 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LifecycleOwner
 import com.example.dailyadvice.R
+import com.example.dailyadvice.data.AdviceDataSource
+import com.example.dailyadvice.data.BackgroundDataSource
 import com.example.dailyadvice.ui.theme.HelveticaCompressed
 import com.example.dailyadvice.ui.view_model.AdviceViewModel
 
+
+var adviceTextValue = mutableStateOf(AdviceDataSource.adviceList.first().text)
+
+var backgroundValue = mutableStateOf(BackgroundDataSource.backgroundList.first().image)
+@SuppressLint("UnrememberedMutableState")
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AdviceScreen(viewModel: AdviceViewModel, lifecycleOwner: LifecycleOwner) {
-    val adviceList by viewModel.adviceList.observeAsState()
-    val currentAdvice = remember { mutableStateOf(viewModel.currentAdvice.value) }
-    val currentBackground = remember { mutableStateOf(viewModel.currentBackground.value) }
-    val animateAdvice = remember { mutableStateOf(false) }
+
+    val animateAdvice = mutableStateOf(false)
+
     Box(
         modifier = Modifier
             .background(Color.Black)
             .fillMaxSize()
     ) {
         AnimatedContent(
-            targetState = currentBackground.value,
+            targetState = backgroundValue.value,
             transitionSpec = {
                 EnterTransition.None with ExitTransition.None
             }) { currentBackground ->
             Image(
                 painter = painterResource(
-                    currentBackground ?: R.drawable.background1
+                    backgroundValue.value
                 ),
                 contentDescription = null,
                 modifier = Modifier
@@ -88,12 +95,12 @@ fun AdviceScreen(viewModel: AdviceViewModel, lifecycleOwner: LifecycleOwner) {
                     indication = null
                 ) {
                     animateAdvice.value = true
-                    currentAdvice.value?.let { viewModel.getNextAdvice(it) }
+                    viewModel.getNext()
                 }
                 .animateContentSize()
         ) {
             AnimatedContent(
-                targetState = currentAdvice.value,
+                targetState = adviceTextValue.value,
                 transitionSpec = {
                     slideInHorizontally(
                         initialOffsetX = { width -> width },
@@ -103,30 +110,38 @@ fun AdviceScreen(viewModel: AdviceViewModel, lifecycleOwner: LifecycleOwner) {
                         animationSpec = tween(durationMillis = 800)
                     )
                 }
-            ) { targetAdvice ->
+            ) { adviceTextValue ->
                 Text(
-                    text = targetAdvice?.text?.uppercase() ?: "",
+                    text = adviceTextValue.uppercase(),
                     style = TextStyle(
                         color = Color.White,
                         fontSize = 48.sp,
                         fontWeight = FontWeight.W900,
                         fontFamily = HelveticaCompressed,
                         letterSpacing = 0.sp,
-                        lineHeight = 60.sp
+                        lineHeight = 60.sp,
                     ),
-                    modifier = Modifier.align(Alignment.CenterStart)
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
                 )
             }
         }
     }
 
-    viewModel.currentAdvice.observe(lifecycleOwner) { newAdvice ->
-        currentAdvice.value = newAdvice
+    viewModel.currentAdviceLiveData.observe(lifecycleOwner) { newAdvice ->
+        changeText(newAdvice.text)
+
     }
 
-    viewModel.currentBackground.observe(lifecycleOwner) { newBackground ->
-        currentBackground.value = newBackground
+    viewModel.currentBackgroundLiveData.observe(lifecycleOwner) { newBackground ->
+        changeBackGround(newBackground.image)
     }
+
+}
+private fun changeText(text: String){
+    adviceTextValue.value = text
 }
 
-
+private fun changeBackGround(image: Int){
+    backgroundValue.value = image
+}
